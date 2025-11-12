@@ -114,41 +114,41 @@ class PatchAutoEncoder(torch.nn.Module, PatchAutoEncoderBase):
 
         def __init__(self, patch_size: int, latent_dim: int, bottleneck: int):
             super().__init__()
-            # This code was written using Copilot
+            ### This code was written using Copilot (GPT-4.1)
             self.patchify = PatchifyLinear(patch_size, latent_dim)
-            self.conv1 = torch.nn.Conv2d(latent_dim, latent_dim, 3, 1, 1)
-            self.gelu1 = torch.nn.GELU()
-            self.conv2 = torch.nn.Conv2d(latent_dim, latent_dim, 3, 1, 1)
-            self.gelu2 = torch.nn.GELU()
-            self.conv3 = torch.nn.Conv2d(latent_dim, bottleneck, 1, 1, 0)
+            self.c1 = torch.nn.Conv2d(latent_dim, latent_dim, kernel_size=3, padding=1, bias=False)
+            self.a1 = torch.nn.GELU()
+            self.c2 = torch.nn.Conv2d(latent_dim, latent_dim, kernel_size=3, padding=1, bias=False)
+            self.a2 = torch.nn.GELU()
+            self.c3 = torch.nn.Conv2d(latent_dim, bottleneck, kernel_size=3, padding=1, bias=False)
 
         def forward(self, x: torch.Tensor) -> torch.Tensor:
-            # This code was written using Copilot
+            ### This code was written using Copilot (GPT-4.1)
             x = self.patchify(x)
             x = hwc_to_chw(x)
-            x = self.gelu1(self.conv1(x))
-            x = self.gelu2(self.conv2(x))
-            x = self.conv3(x)
+            x = self.a1(self.c1(x))
+            x = self.a2(self.c2(x))
+            x = self.c3(x)
             x = chw_to_hwc(x)
             return x
 
     class PatchDecoder(torch.nn.Module):
         def __init__(self, patch_size: int, latent_dim: int, bottleneck: int):
             super().__init__()
-            # This code was written using Copilot
-            self.conv1 = torch.nn.Conv2d(bottleneck, latent_dim, 1, 1, 0)
-            self.gelu1 = torch.nn.GELU()
-            self.conv2 = torch.nn.Conv2d(latent_dim, latent_dim, 3, 1, 1)
-            self.gelu2 = torch.nn.GELU()
-            self.conv3 = torch.nn.Conv2d(latent_dim, latent_dim, 3, 1, 1)
+            # This code was written using Copilot (GPT-4.1)
+            self.c1 = torch.nn.Conv2d(bottleneck, latent_dim, kernel_size=3, padding=1, bias=False)
+            self.a1 = torch.nn.GELU()
+            self.c2 = torch.nn.Conv2d(latent_dim, latent_dim, kernel_size=3, padding=1, bias=False)
+            self.a2 = torch.nn.GELU()
+            self.c3 = torch.nn.Conv2d(latent_dim, latent_dim, kernel_size=3, padding=1, bias=False)
             self.unpatchify = UnpatchifyLinear(patch_size, latent_dim)
 
         def forward(self, x: torch.Tensor) -> torch.Tensor:
-            # This code was written using Copilot
+            ### This code was written using Copilot (GPT-4.1)
             x = hwc_to_chw(x)
-            x = self.gelu1(self.conv1(x))
-            x = self.gelu2(self.conv2(x))
-            x = self.conv3(x)
+            x = self.a1(self.c1(x))
+            x = self.a2(self.c2(x))
+            x = self.c3(x)
             x = chw_to_hwc(x)            
             x = self.unpatchify(x)
             return x

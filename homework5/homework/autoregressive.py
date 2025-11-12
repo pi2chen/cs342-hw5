@@ -58,20 +58,43 @@ class AutoregressiveModel(torch.nn.Module, Autoregressive):
         self.d_latent = d_latent
         self.n_tokens = n_tokens
         self.token_embedding = torch.nn.Embedding(n_tokens, d_latent)
+        
+        ### The code below this line was written using Copilot (GPT-4.1)
         self.transformer_layer = torch.nn.TransformerEncoderLayer(d_model=d_latent, nhead=8)
+        
         self.output_layer = torch.nn.Linear(d_latent, n_tokens)
 
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
+        ### This code was written using Copilot (GPT-4.1)
         B, h, w = x.shape
-        x = x.view(B, h * w)  # (B, h*w)
-        x_embedded = self.token_embedding(x)  # (B, h*w, d_latent)
-        x_embedded = torch.nn.functional.pad(x_embedded, (0, 0, 1, 0))[:, :-1]  # Shift right
-        x_embedded = x_embedded.transpose(0, 1)  # (h*w, B, d_latent)
-        transformer_output = self.transformer_layer(x_embedded)  # (h*w, B, d_latent)
-        transformer_output = transformer_output.transpose(0, 1)  # (B, h*w, d_latent)
-        output_logits = self.output_layer(transformer_output)  # (B, h*w, n_tokens)
-        output_logits = output_logits.view(B, h, w, self.n_tokens)  # (B, h, w, n_tokens)
+        seq_len = h * w
+        x = x.view(B, seq_len)
+        x_embedded = self.token_embedding(x)
+        x_embedded = torch.nn.functional.pad(x_embedded, (0, 0, 1, 0))[:, :-1]
+        x_embedded = x_embedded.transpose(0, 1)
+        
+        causal_mask = torch.nn.Transformer.generate_square_subsequent_mask(seq_len).to(x.device)  # (h*w, h*w)
+        
+        transformer_output = self.transformer_layer(x_embedded, src_mask=causal_mask)
+        transformer_output = transformer_output.transpose(0, 1)
+        output_logits = self.output_layer(transformer_output)
+        output_logits = output_logits.view(B, h, w, self.n_tokens)
         return output_logits, {}
 
     def generate(self, B: int = 1, h: int = 30, w: int = 20, device=None) -> torch.Tensor:  # noqa
-        raise NotImplementedError()
+        ### This code was written using Copilot (Claude Sonnet 4)
+        self.eval()
+        seq_len = h * w
+        generated = torch.zeros(B, seq_len, dtype=torch.long, device=device)
+        
+        with torch.no_grad():
+            for i in range(seq_len):
+                output_logits, _ = self.forward(generated.view(B, h, w))
+                next_token_logits = output_logits[:, i // w, i % w, :]
+                
+                probs = torch.nn.functional.softmax(next_token_logits, dim=-1)
+                next_token = torch.multinomial(probs, num_samples=1).squeeze(-1)
+                
+                generated[:, i] = next_token
+        
+        return generated.view(B, h, w)

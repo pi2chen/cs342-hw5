@@ -53,21 +53,37 @@ class BSQ(torch.nn.Module):
         self.up_proj = torch.nn.Linear(codebook_bits, embedding_dim)
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Implement the BSQ encoder:
+        - A linear down-projection into codebook_bits dimensions
+        - L2 normalization
+        - differentiable sign
+        """
         h = self.down_proj(x)
         h = torch.nn.functional.normalize(h, p=2, dim=-1) # p=2, no eps
         codes = diff_sign(h)
         return codes
 
     def decode(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Implement the BSQ decoder:
+        - A linear up-projection into embedding_dim should suffice
+        """
         return self.up_proj(x)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.decode(self.encode(x))
 
     def encode_index(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Run BQS and encode the input tensor x into a set of integer tokens
+        """
         return self._code_to_index(self.encode(x))
 
     def decode_index(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Decode a set of integer tokens into an image.
+        """
         return self.decode(self._index_to_code(x))
 
     def _code_to_index(self, x: torch.Tensor) -> torch.Tensor:
@@ -79,6 +95,13 @@ class BSQ(torch.nn.Module):
 
 
 class BSQPatchAutoEncoder(PatchAutoEncoder, Tokenizer):
+    """
+    Combine your PatchAutoEncoder with BSQ to form a Tokenizer.
+
+    Hint: The hyper-parameters below should work fine, no need to change them
+          Changing the patch-size of codebook-size will complicate later parts of the assignment.
+    """
+    
     def __init__(self, patch_size=5, latent_dim=128, codebook_bits=10):
         super().__init__(patch_size=patch_size, latent_dim=latent_dim)
         self._codebook_bits = codebook_bits
@@ -93,19 +116,34 @@ class BSQPatchAutoEncoder(PatchAutoEncoder, Tokenizer):
         return super().decode(z)
 
     def encode_index(self, x):
-        # This code was written using Copilot
+        ### This code was written using Copilot (GPT-4.1)
         z = super().encode(x)
         codes = self.bsq.encode(z)
         return self.bsq._code_to_index(codes)
 
     def decode_index(self, x):
-        # This code was written using Copilot
+        ### This code was written using Copilot (GPT-4.1)
         codes = self.bsq._index_to_code(x)
         z = self.bsq.decode(codes)
         return super().decode(z)
 
     def forward(self, x):
-        # This code was written using Copilot
+        """
+        Return the reconstructed image and a dictionary of additional loss terms you would like to
+        minimize (or even just visualize).
+        Hint: It can be helpful to monitor the codebook usage with
+
+              cnt = torch.bincount(self.encode_index(x).flatten(), minlength=2**self.codebook_bits)
+
+              and returning
+
+              {
+                "cb0": (cnt == 0).float().mean().detach(),
+                "cb2": (cnt <= 2).float().mean().detach(),
+                ...
+              }
+        """
+        ### This code was written using Copilot (GPT-4.1)
         z = self.encode(x)
         x_recon = self.decode(z)
 
