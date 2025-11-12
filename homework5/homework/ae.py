@@ -114,6 +114,7 @@ class PatchAutoEncoder(torch.nn.Module, PatchAutoEncoderBase):
 
         def __init__(self, patch_size: int, latent_dim: int, bottleneck: int):
             super().__init__()
+            # This code was written using Copilot
             self.patchify = PatchifyLinear(patch_size, latent_dim)
             self.conv1 = torch.nn.Conv2d(latent_dim, latent_dim, 3, 1, 1)
             self.gelu1 = torch.nn.GELU()
@@ -122,6 +123,7 @@ class PatchAutoEncoder(torch.nn.Module, PatchAutoEncoderBase):
             self.conv3 = torch.nn.Conv2d(latent_dim, bottleneck, 1, 1, 0)
 
         def forward(self, x: torch.Tensor) -> torch.Tensor:
+            # This code was written using Copilot
             x = self.patchify(x)
             x = hwc_to_chw(x)
             x = self.gelu1(self.conv1(x))
@@ -133,24 +135,22 @@ class PatchAutoEncoder(torch.nn.Module, PatchAutoEncoderBase):
     class PatchDecoder(torch.nn.Module):
         def __init__(self, patch_size: int, latent_dim: int, bottleneck: int):
             super().__init__()
-            # Mirror the encoder's last conv first (bottleneck → latent_dim)
+            # This code was written using Copilot
             self.conv1 = torch.nn.Conv2d(bottleneck, latent_dim, 1, 1, 0)
             self.gelu1 = torch.nn.GELU()
-            # Mirror encoder's conv2/conv1 in reverse order
             self.conv2 = torch.nn.Conv2d(latent_dim, latent_dim, 3, 1, 1)
             self.gelu2 = torch.nn.GELU()
             self.conv3 = torch.nn.Conv2d(latent_dim, latent_dim, 3, 1, 1)
-            # Finally, unpatchify back to the image domain
             self.unpatchify = UnpatchifyLinear(patch_size, latent_dim)
 
         def forward(self, x: torch.Tensor) -> torch.Tensor:
-            # Input: (B, H', W', bottleneck)
-            x = hwc_to_chw(x)                  # (B, bottleneck, H', W')
-            x = self.gelu1(self.conv1(x))      # expand to latent_dim
+            # This code was written using Copilot
+            x = hwc_to_chw(x)
+            x = self.gelu1(self.conv1(x))
             x = self.gelu2(self.conv2(x))
             x = self.conv3(x)
-            x = chw_to_hwc(x)                  # (B, H', W', latent_dim)
-            x = self.unpatchify(x)             # reconstruct (B, H, W, C)
+            x = chw_to_hwc(x)            
+            x = self.unpatchify(x)
             return x
 
     def __init__(self, patch_size: int = 25, latent_dim: int = 128, bottleneck: int = 128):

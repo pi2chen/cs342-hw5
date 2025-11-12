@@ -85,24 +85,27 @@ class BSQPatchAutoEncoder(PatchAutoEncoder, Tokenizer):
         self.bsq = BSQ(codebook_bits, latent_dim)
 
     def encode(self, x):
-        z = PatchAutoEncoder.encode(self, x)  # latent embeddings (not quantized)
-        return self.bsq.encode(z)             # apply BSQ quantization
+        z = super().encode(x)
+        return self.bsq.encode(z)
 
     def decode(self, x):
-        z = self.bsq.decode(x)              # decode BSQ quantized embeddings
-        return PatchAutoEncoder.decode(self, z)  # decode the latent embeddings into an image
+        z = self.bsq.decode(x)
+        return super().decode(z)
 
     def encode_index(self, x):
-        z = PatchAutoEncoder.encode(self, x)  # latent embeddings (not quantized)
-        codes = self.bsq.encode(z)     # apply BSQ quantization
+        # This code was written using Copilot
+        z = super().encode(x)
+        codes = self.bsq.encode(z)
         return self.bsq._code_to_index(codes)
 
     def decode_index(self, x):
+        # This code was written using Copilot
         codes = self.bsq._index_to_code(x)
         z = self.bsq.decode(codes)
-        return PatchAutoEncoder.decode(self, z)
+        return super().decode(z)
 
     def forward(self, x):
+        # This code was written using Copilot
         z = self.encode(x)
         x_recon = self.decode(z)
 
